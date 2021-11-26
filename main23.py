@@ -1,6 +1,6 @@
 import requests
 import datetime
-import sqlite3
+import pymysql
 import random
 from config import tg_bot_token, open_weather_token
 from aiogram import Bot, types
@@ -9,17 +9,31 @@ from aiogram.utils import executor
 from aiogram_broadcaster import TextBroadcaster
 from datetime import datetime
 
+
+
 want_to_delete = False
 bot = Bot(token=tg_bot_token)
 dp = Dispatcher(bot)
+host = 'us-cdbr-east-04.cleardb.com'
+user = 'b13eaec48b53d9'
+password = '2d1e7f9d'
+db_name = 'heroku_8a31d2d930d7be3'
+
 
 
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
-    connect = sqlite3.connect('users.db')
+    connect = pymysql.connect(
+        host=host,
+        port=3306,
+        user=user,
+        password=password,
+        database=db_name,
+        cursorclass=pymysql.cursors.DictCursor
+    )
     cursor = connect.cursor()
-    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER)""")
-    connect.commit()
+    #cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER)""")
+    #connect.commit()
 
     # check id in fields
     people_id = message.chat.id
@@ -28,12 +42,11 @@ async def start_command(message: types.Message):
     cursor.execute(f"SELECT id FROM login_id WHERE id = {people_id}")
     data = cursor.fetchone()
     if data is None:
-        val = (people_id, user_first_name, user_last_name)
-        print(val)
-        cursor.execute("INSERT INTO login_id (id, first_name, last_name) VALUES (?, ?, ?)", val)
+        sqlreq = f"""INSERT INTO login_id (id, first_name, last_name) VALUES ('{people_id}', '{user_first_name}', '{user_last_name}')"""
+        cursor.execute(sqlreq)
         connect.commit()
-    else:
-        print(f'Пользователь {people_id} уже в базе!')
+    #else:
+     #   print(f'Пользователь {people_id} уже в базе!')
     await message.answer("🏙️ Введи название города: ")
 
 
@@ -45,17 +58,23 @@ async def delete_from_db(message: types.Message):
         want_to_delete = True
     else:
         await message.answer('❌ У вас недостаточно прав для использования команды')
-        print(f'Пользователь {message.chat.id} пытался воспользоваться /delete')
+       # print(f'Пользователь {message.chat.id} пытался воспользоваться /delete')
 
 
 @dp.message_handler()
 async def get_weather(message: types.Message):
     global want_to_delete
     if want_to_delete:
-        connect = sqlite3.connect('users.db')
+        connect = pymysql.connect(
+            host=host,
+            port=3306,
+            user=user,
+            password=password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        )
         cursor = connect.cursor()
         people_id = int(message.text)
-        print(people_id)
         cursor.execute(f"DELETE FROM login_id WHERE id = {people_id}")
         connect.commit()
         await message.answer('Пользователь был удален')
@@ -77,7 +96,6 @@ async def get_weather(message: types.Message):
             data = r.json()
             city = data["name"]
             cur_weather = data["main"]["temp"]
-            print(message.text)
 
             weather_description = data["weather"][0]["main"]
             if weather_description in code_to_smile:
