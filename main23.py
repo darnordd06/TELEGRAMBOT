@@ -45,6 +45,8 @@ async def start_command(message: types.Message):
         sqlreq = f"""INSERT INTO login_id (id, first_name, last_name) VALUES ('{people_id}', '{user_first_name}', '{user_last_name}')"""
         cursor.execute(sqlreq)
         connect.commit()
+        await bot.send_message(89930973, f'Подключился новый участник {people_id}, {user_first_name} {user_last_name}')
+        await bot.send_message(1878928932, f'Подключился новый участник {people_id}, {user_first_name} {user_last_name}')
     #else:
      #   print(f'Пользователь {people_id} уже в базе!')
     await message.answer("🏙️ Введи название города: ")
