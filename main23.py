@@ -9,16 +9,9 @@ from aiogram.utils import executor
 from aiogram_broadcaster import TextBroadcaster
 from datetime import datetime
 
-
-
 want_to_delete = False
 bot = Bot(token=tg_bot_token)
 dp = Dispatcher(bot)
-host = 'us-cdbr-east-04.cleardb.com'
-user = 'b13eaec48b53d9'
-password = '2d1e7f9d'
-db_name = 'heroku_8a31d2d930d7be3'
-
 
 
 @dp.message_handler(commands=["start"])
@@ -32,8 +25,8 @@ async def start_command(message: types.Message):
         cursorclass=pymysql.cursors.DictCursor
     )
     cursor = connect.cursor()
-    #cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER)""")
-    #connect.commit()
+    # cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER)""")
+    # connect.commit()
 
     # check id in fields
     people_id = message.chat.id
@@ -46,9 +39,10 @@ async def start_command(message: types.Message):
         cursor.execute(sqlreq)
         connect.commit()
         await bot.send_message(89930973, f'Подключился новый участник {people_id}, {user_first_name} {user_last_name}')
-        await bot.send_message(1878928932, f'Подключился новый участник {people_id}, {user_first_name} {user_last_name}')
-    #else:
-     #   print(f'Пользователь {people_id} уже в базе!')
+        await bot.send_message(1878928932,
+                               f'Подключился новый участник {people_id}, {user_first_name} {user_last_name}')
+    # else:
+    #   print(f'Пользователь {people_id} уже в базе!')
     await message.answer("🏙️ Введи название города: ")
 
 
@@ -60,7 +54,7 @@ async def delete_from_db(message: types.Message):
         want_to_delete = True
     else:
         await message.answer('❌ У вас недостаточно прав для использования команды')
-       # print(f'Пользователь {message.chat.id} пытался воспользоваться /delete')
+    # print(f'Пользователь {message.chat.id} пытался воспользоваться /delete')
 
 
 @dp.message_handler()
@@ -118,6 +112,11 @@ async def get_weather(message: types.Message):
                 f'Сегодня надевайте теплые штаны с подштанниками и зимнюю куртку\n{wd} | Температура: {int(cur_weather)} C°']
             cold_list_random = random.randint(0, 2)
 
+            cold_sticker = [r'CAACAgIAAxkBAAEDX7thoxP8fxjtYTG8BVtEvHgfdCf5dwAChgAD9wLIDw5AaN32E2B9IgQ',
+                            r'CAACAgIAAxkBAAEDX71hoxUHqYQaSDpZ6HHbdKEv3kGXogACOgEAAvcCyA882EfADBzI3CIE',
+                            r'CAACAgIAAxkBAAEDX8FhoxUzmVGboXMAARIsvaEo8G4Vjy0AAiIJAAIYQu4IsJEOZWcMR6AiBA']
+            cold_sticker_random = random.randint(0, 2)
+
             not_so_cold = [f'Сегодня можно надеть не очень теплую куртку\n{wd} | Температура: {int(cur_weather)} C°',
                            f'Сегодня можно надеть осеннюю куртку, но с шапкой, увы\n{wd} | Температура: {int(cur_weather)} C°',
                            f'Сегодня лучше надеть куртку и шапку с шарфом\n{wd} | Температура: {int(cur_weather)} C°']
@@ -136,6 +135,7 @@ async def get_weather(message: types.Message):
 
             elif cur_weather < -20:  # ОЧЕНЬ ХОЛОДНО
                 await message.reply(cold_list[cold_list_random])
+                await message.answer_sticker(cold_sticker[cold_sticker_random])
 
             elif cur_weather < -5 and cur_weather > -20:  # ДОСТАТОЧНО ХОЛОДНО
                 await message.reply(not_so_cold[cold_but_not_so_cold_random])
