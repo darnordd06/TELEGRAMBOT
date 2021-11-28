@@ -2,7 +2,7 @@ import requests
 import datetime
 import pymysql
 import random
-from config import tg_bot_token, open_weather_token
+from config import tg_bot_token, open_weather_token, host, user, password, db_name
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
