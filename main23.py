@@ -2,6 +2,7 @@ import requests
 import datetime
 import pymysql
 import random
+import time
 from config import tg_bot_token, open_weather_token, host, user, password, db_name
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -10,6 +11,7 @@ from aiogram_broadcaster import TextBroadcaster
 from datetime import datetime
 
 want_to_delete = False
+admin_start = False
 bot = Bot(token=tg_bot_token)
 dp = Dispatcher(bot)
 
@@ -49,7 +51,7 @@ async def start_command(message: types.Message):
 @dp.message_handler(commands=['delete'])
 async def delete_from_db(message: types.Message):
     global want_to_delete
-    if message.chat.id == 89930973:
+    if message.chat.id == 89930973 or 1878928932:
         await message.answer('Введите id пользователя, которого хотите удалить: ')
         want_to_delete = True
     else:
@@ -57,10 +59,22 @@ async def delete_from_db(message: types.Message):
     # print(f'Пользователь {message.chat.id} пытался воспользоваться /delete')
 
 
+@dp.message_handler(commands=['admin'])
+async def admin_func(message: types.Message):
+    global admin_start
+    if message.chat.id == 89930973 or 1878928932:
+        admin_start = True
+        await message.answer('Введите сообщение для рассылки:')
+    else:
+        await message.answer('❌ У вас недостаточно прав для использования команды')
+
+
 @dp.message_handler()
 async def get_weather(message: types.Message):
     global want_to_delete
-    if want_to_delete:
+    global admin_start
+    if admin_start:
+        admin_start = False
         connect = pymysql.connect(
             host=host,
             port=3306,
@@ -70,11 +84,36 @@ async def get_weather(message: types.Message):
             cursorclass=pymysql.cursors.DictCursor
         )
         cursor = connect.cursor()
+        cursor.execute(f"SELECT id FROM login_id")
+        data = cursor.fetchall()
+        for item in data:
+            await bot.send_message(item['id'], f'Тестовая рассылка всем контактам - {message.text}')
+            time.sleep(0.1)
+        return
+
+    if want_to_delete and (message.chat.id == (89930973 or 1878928932)):
+        connect = pymysql.connect(
+            host=host,
+            port=3306,
+            user=user,
+            password=password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        cursor = connect.cursor()
+        if not message.text.isdigit():
+            await message.answer('Введен некорректный id пользователя')
+            return
         people_id = int(message.text)
-        cursor.execute(f"DELETE FROM login_id WHERE id = {people_id}")
-        connect.commit()
-        await message.answer('Пользователь был удален')
-        want_to_delete = False
+        cursor.execute(f"SELECT id FROM login_id WHERE id = {people_id}")
+        data = cursor.fetchone()
+        if data != None:
+            cursor.execute(f"DELETE FROM login_id WHERE id = {people_id}")
+            connect.commit()
+            await message.answer('Пользователь был удален')
+            want_to_delete = False
+        else:
+            await message.answer('Пользователя нет в базе')
     else:
         code_to_smile = {
             "Clear": "Ясно \U00002600",
