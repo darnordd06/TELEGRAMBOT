@@ -7,7 +7,6 @@ from config import tg_bot_token, open_weather_token, host, user, password, db_na
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-from aiogram_broadcaster import TextBroadcaster
 from datetime import datetime
 
 want_to_delete = False
@@ -111,6 +110,7 @@ async def get_weather(message: types.Message):
             cursor.execute(f"DELETE FROM login_id WHERE id = {people_id}")
             connect.commit()
             await message.answer('Пользователь был удален')
+            print('Пользователь был удален')
             want_to_delete = False
         else:
             await message.answer('Пользователя нет в базе')
